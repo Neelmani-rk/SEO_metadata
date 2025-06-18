@@ -138,7 +138,7 @@ def main():
                         if meta_title:
                             count = len(meta_title)
                             if 30 <= count <= 60:
-                                st.success(f"✅ {meta_title}")
+                                st.success(f" {meta_title}")
                                 st.caption(f"Character count: {count}/60 (Perfect!)")
                             else:
                                 st.warning(f"⚠️ {meta_title}")
@@ -151,7 +151,7 @@ def main():
                         if meta_description:
                             count = len(meta_description)
                             if 120 <= count <= 160:
-                                st.success(f"✅ {meta_description}")
+                                st.success(f" {meta_description}")
                                 st.caption(f"Character count: {count}/160 (Perfect!)")
                             else:
                                 st.warning(f"⚠️ {meta_description}")
