@@ -61,7 +61,7 @@ def main():
         layout="wide"
     )
 
-    st.title("🔍 SEO Meta Title & Description Generator")
+    st.title("🔍 SEO Meta Title & Description Generator VERSION 2")
     st.write("Craft CTR-boosting meta tags with Gemini AI")
 
     # Sidebar API key check
