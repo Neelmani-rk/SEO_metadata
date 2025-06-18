@@ -1,19 +1,13 @@
 import streamlit as st
 import google.generativeai as genai
-from google.generativeai import types
 
+# Configure API key from secrets.toml
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# Fetch API key from Streamlit secrets
-DEFAULT_API_KEY = st.secrets["API_KEY"]
-
-
-def generate_meta_content(page_name, main_keywords, url, api_key):
-    """
-    Generate meta title and description using Gemini API
-    """
+# Function to generate meta content
+def generate_meta_content(page_name, main_keywords, url):
     try:
-        client = genai.Client(api_key=api_key)
-        model = "gemini-2.0-flash"
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
         prompt = f"""
         You are an SEO expert. Based on the following information, generate a meta title and meta description for a webpage:
@@ -34,37 +28,15 @@ def generate_meta_content(page_name, main_keywords, url, api_key):
         META DESCRIPTION: [your meta description here]
         """
 
-        contents = [
-            types.Content(
-                role="user",
-                parts=[
-                    types.Part.from_text(text=prompt),
-                ],
-            ),
-        ]
+        response = model.generate_content(prompt)
 
-        generate_content_config = types.GenerateContentConfig(
-            response_mime_type="text/plain",
-        )
-
-        response_text = ""
-        for chunk in client.models.generate_content_stream(
-            model=model,
-            contents=contents,
-            config=generate_content_config,
-        ):
-            response_text += chunk.text
-
-        return response_text
+        return response.text if hasattr(response, "text") else str(response)
 
     except Exception as e:
         return f"Error: {str(e)}"
 
-
+# Function to parse model output
 def parse_response(response_text):
-    """
-    Parse the response to extract meta title and description
-    """
     lines = response_text.strip().split('\n')
     meta_title = ""
     meta_description = ""
@@ -77,7 +49,7 @@ def parse_response(response_text):
 
     return meta_title, meta_description
 
-
+# Streamlit app layout
 def main():
     st.set_page_config(
         page_title="SEO Meta Generator",
@@ -88,21 +60,15 @@ def main():
     st.title("🔍 SEO Meta Title & Description Generator")
     st.write("Generate optimized meta titles and descriptions using Gemini AI")
 
+    # Sidebar (show key present status)
     with st.sidebar:
-        st.header("🔑 Gemini API Key")
-        api_key = st.text_input(
-            "Enter your Gemini API Key",
-            value=DEFAULT_API_KEY,
-            type="password",
-            help="Pre-filled from Streamlit secrets"
-        )
-        if api_key:
-            st.success("API Key is set and ready to use ✅")
+        st.header("Configuration")
+        if "GEMINI_API_KEY" in st.secrets:
+            st.success("✅ API Key loaded from secrets.toml")
         else:
-            st.warning("Please enter your Gemini API key")
+            st.error("❌ Missing GEMINI_API_KEY in secrets")
 
-
-    # Main input form
+    # Input form
     st.header("Input Information")
 
     col1, col2 = st.columns(2)
@@ -116,7 +82,7 @@ def main():
 
         main_keywords = st.text_area(
             "Main Keywords *",
-            placeholder="e.g., engagement rings, diamond rings, gold engagement rings",
+            placeholder="e.g., engagement rings, engagement rings for women, diamond engagement rings, gold engagement rings, jewellery website",
             help="Enter comma-separated keywords relevant to the page",
             height=100
         )
@@ -124,27 +90,25 @@ def main():
     with col2:
         url = st.text_input(
             "URL *",
-            placeholder="e.g., https://www.example.com/page",
+            placeholder="e.g., https://www.blissdiamond.com/collections/engagement",
             help="Enter the URL of the page"
         )
 
         st.write("")  # spacing
-        st.write("")  # spacing
+        st.write("")
         generate_button = st.button(
             "🚀 Generate Meta Tags",
             type="primary",
             use_container_width=True
         )
 
-    # Validation and generation
+    # Generate and display
     if generate_button:
-        if not api_key:
-            st.error("❌ Please provide your Gemini API key in the sidebar")
-        elif not all([page_name, main_keywords, url]):
+        if not all([page_name, main_keywords, url]):
             st.error("❌ Please fill in all required fields")
         else:
             with st.spinner("🤖 Generating meta tags..."):
-                response = generate_meta_content(page_name, main_keywords, url, api_key)
+                response = generate_meta_content(page_name, main_keywords, url)
 
                 if response.startswith("Error:"):
                     st.error(f"❌ {response}")
@@ -155,76 +119,65 @@ def main():
                     st.header("Results")
 
                     with st.expander("📋 Input Summary", expanded=True):
-                        input_col1, input_col2, input_col3 = st.columns(3)
-
-                        with input_col1:
+                        col_i1, col_i2, col_i3 = st.columns(3)
+                        with col_i1:
                             st.write("**Page Name:**")
                             st.info(page_name)
-
-                        with input_col2:
+                        with col_i2:
                             st.write("**Main Keywords:**")
                             st.info(main_keywords)
-
-                        with input_col3:
+                        with col_i3:
                             st.write("**URL:**")
                             st.info(url)
 
-                    # Output
                     st.subheader("🎯 Generated Meta Tags")
+                    out1, out2 = st.columns(2)
 
-                    output_col1, output_col2 = st.columns(2)
-
-                    with output_col1:
+                    with out1:
                         st.write("**Meta Title:**")
                         if meta_title:
-                            char_count_title = len(meta_title)
-                            if 30 <= char_count_title <= 60:
-                                st.success(f" {meta_title}")
-                                st.caption(f"Character count: {char_count_title}/60 (Perfect!)")
+                            count = len(meta_title)
+                            if 30 <= count <= 60:
+                                st.success(f"✅ {meta_title}")
+                                st.caption(f"Character count: {count}/60 (Perfect!)")
                             else:
-                                st.warning(f" {meta_title}")
-                                st.caption(f"Character count: {char_count_title}/60 (Outside optimal range)")
+                                st.warning(f"⚠️ {meta_title}")
+                                st.caption(f"Character count: {count}/60 (Outside optimal range)")
                         else:
-                            st.error("Failed to generate meta title")
+                            st.error("❌ Failed to generate meta title")
 
-                    with output_col2:
+                    with out2:
                         st.write("**Meta Description:**")
                         if meta_description:
-                            char_count_desc = len(meta_description)
-                            if 120 <= char_count_desc <= 160:
-                                st.success(f" {meta_description}")
-                                st.caption(f"Character count: {char_count_desc}/160 (Perfect!)")
+                            count = len(meta_description)
+                            if 120 <= count <= 160:
+                                st.success(f"✅ {meta_description}")
+                                st.caption(f"Character count: {count}/160 (Perfect!)")
                             else:
-                                st.warning(f" {meta_description}")
-                                st.caption(f"Character count: {char_count_desc}/160 (Outside optimal range)")
+                                st.warning(f"⚠️ {meta_description}")
+                                st.caption(f"Character count: {count}/160 (Outside optimal range)")
                         else:
-                            st.error("Failed to generate meta description")
+                            st.error("❌ Failed to generate meta description")
 
+                    # Copyable block
                     if meta_title and meta_description:
                         st.subheader("📋 Copy Ready Format")
-                        copy_text = f"""<title>{meta_title}</title>
-<meta name="description" content="{meta_description}">"""
+                        st.code(f"""<title>{meta_title}</title>
+<meta name="description" content="{meta_description}">""", language="html")
 
-                        st.code(copy_text, language="html")
-
-                        with st.expander("📝 Raw Text (for easy copying)"):
+                        with st.expander("📝 Raw Text"):
                             st.text(f"Meta Title: {meta_title}")
                             st.text(f"Meta Description: {meta_description}")
 
-    # How to use
     with st.expander("📖 How to use this tool"):
         st.write("""
-        1. **Enter Gemini API Key** (or load from your environment variable `GEMINI_API_KEY`)
-        2. **Fill Input Fields**:
-           - **Page Name**: The title or name of your webpage
-           - **Main Keywords**: Comma-separated list of relevant keywords
-           - **URL**: The actual URL of the page
-        3. **Generate**: Click the generate button to create optimized meta tags
-        4. **Review & Copy**: Check character counts and copy the generated HTML code
-
-        **Character Limits:**
-        - Meta Title: 30-60 characters
-        - Meta Description: 120-160 characters
+        1. **Add API Key**: Place your Gemini API key in `.streamlit/secrets.toml`
+        2. **Fill Fields**:
+           - **Page Name**: Web page title
+           - **Main Keywords**: Comma-separated SEO keywords
+           - **URL**: The full web page link
+        3. **Click Generate**: Wait for Gemini AI to generate results
+        4. **Copy Output**: Paste tags into your HTML head
         """)
 
 if __name__ == "__main__":
