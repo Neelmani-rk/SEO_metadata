@@ -6,7 +6,7 @@ import google.generativeai as genai
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 # Dataset with 36 rows
-data = [
+DATA = [
     ["Engagement Rings", "engagement rings, engagement rings for women, diamond engagement rings, gold engagement rings, jewellery website", "https://www.blissdiamond.com/collections/engagement"],
     ["Wedding Rings", "wedding rings, guys wedding rings, wedding bands for him, wedding rings for women, female wedding rings, gold wedding rings, unique wedding rings", "https://www.blissdiamond.com/collections/wedding-rings"],
     ["Jewelry", "diamond rings, lab grown diamond, diamond earrings, diamond engagement rings, gold jewlary, diamond jewellery, jewellery website", "https://www.blissdiamond.com/collections/jewelry"],
