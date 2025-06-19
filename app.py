@@ -63,7 +63,7 @@ def generate_meta_content(page_name, main_keywords, url):
 
         Requirements:
         1. Meta Title: Must be between 30-60 characters (strictly enforce this limit)
-        2. Meta Description: Must be between 120-160 characters (strictly enforce this limit) Dont exceed the 160 character limit strictly
+        2. Meta Description: Must be between 120-160 characters (strictly enforce this limit, DO NOT EXCEED 160 characters)
         3. Include relevant keywords naturally
         4. Make it compelling and click-worthy
         5. Ensure it's relevant to the page content
@@ -78,6 +78,7 @@ def generate_meta_content(page_name, main_keywords, url):
 
     except Exception as e:
         return f"Error: {str(e)}"
+
 
 def parse_response(response_text):
     lines = response_text.strip().split('\n')
