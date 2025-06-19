@@ -68,7 +68,7 @@ def generate_meta_content(page_name, main_keywords, url):
         4. Include relevant keywords naturally
         5. Make it compelling and click-worthy
         6. Ensure it's relevant to the page content
-        7. Do not include links in the Description , make it crisp and short Strictly.
+        7. Make it crisp and short Strictly. Just give 1 or 2 sentences.
 
         Please provide the output in this exact format:
         META TITLE: [your meta title here]
