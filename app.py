@@ -50,41 +50,35 @@ DATA = [
 DF = pd.DataFrame(DATA, columns=["Page Name", "Main Keywords", "URL"])
 DF.index += 1
 
-def generate_meta_content(page_name, main_keywords, url, max_retries=3):
-    model = genai.GenerativeModel("gemini-1.5-flash")
+def generate_meta_content(page_name, main_keywords, url):
+    try:
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
-    prompt_template = f"""
-    You are an SEO expert. Based on the following information, generate a meta title and meta description for a webpage:
+        prompt = f"""
+        You are an SEO expert. Based on the following information, generate a meta title and meta description for a webpage:
 
-    Page Name: {page_name}
-    Main Keywords: {main_keywords}
-    URL: {url}
+        Page Name: {page_name}
+        Main Keywords: {main_keywords}
+        URL: {url}
 
-    Requirements:
-    1. Meta Title: Must be between 30-60 characters (strictly enforce this limit)
-    2. Meta Description: Must be between 120-160 characters (strictly enforce this limit, DO NOT EXCEED 160 characters)
-    3. Include relevant keywords naturally
-    4. Make it compelling and click-worthy
-    5. Ensure it's relevant to the page content
+        Requirements:
+        1. Meta Title: Must be between 30-60 characters (strictly enforce this limit)
+        2. Meta Description: Must be between 120-160 characters (strictly enforce this limit, DO NOT EXCEED 160 characters)
+        3. Include relevant keywords naturally
+        4. Make it compelling and click-worthy
+        5. Ensure it's relevant to the page content
 
-    Please provide the output in this exact format:
-    META TITLE: [your meta title here]
-    META DESCRIPTION: [your meta description here]
-    """
+        Please provide the output in this exact format:
+        META TITLE: [your meta title here]
+        META DESCRIPTION: [your meta description here]
+        """
 
-    for attempt in range(max_retries):
-        try:
-            response = model.generate_content(prompt_template)
-            response_text = response.text if hasattr(response, "text") else str(response)
-            meta_title, meta_description = parse_response(response_text)
+        response = model.generate_content(prompt)
+        return response.text if hasattr(response, "text") else str(response)
 
-            if len(meta_description) <= 160:
-                return meta_title, meta_description
-        except Exception as e:
-            return "", f"Error: {str(e)}"
-        time.sleep(1)
-
-    return meta_title, meta_description[:160]  # Fallback to truncation
+    except Exception as e:
+        return f"Error: {str(e)}"
+    
 
 def parse_response(response_text):
     lines = response_text.strip().split('\n')
@@ -96,7 +90,6 @@ def parse_response(response_text):
         elif line.startswith("META DESCRIPTION:"):
             meta_description = line.replace("META DESCRIPTION:", "").strip()
     return meta_title, meta_description
-
 def main():
     st.set_page_config(
         page_title="SEO Meta Generator",
