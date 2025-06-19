@@ -70,6 +70,7 @@ def generate_meta_content(page_name, main_keywords, url):
         6. Ensure it's relevant to the page content
         7. Make it crisp and very short Strictly and catchy.
         8. Do not leave space when starting a new line , keep the sentence very short , at maximum use only 2 sentence.
+        9. End the description with "Shop Now!" .
 
         Please provide the output in this exact format:
         META TITLE: [your meta title here]
