@@ -62,10 +62,11 @@ def generate_meta_content(page_name, main_keywords, url):
             Please strictly follow these requirements:
             
             1. Meta Title: 30–60 characters only
-            2. Meta Description: 120–160 characters only
+            2. ** Meta Description: 120–140 characters only or 2 very brief sentences. Do not exceed 160 character limit. **
             3. Integrate the primary keywords naturally
             4. Ensure relevance to the page name and URL
             5. Make it action-oriented and enticing to click
+    
             
             Write output in this exact format:
             META TITLE: [your title here]
