@@ -54,28 +54,7 @@ def generate_meta_content(page_name, main_keywords, url):
     try:
         model = genai.GenerativeModel("gemini-1.5-flash")
 
-        # prompt = f"""
-        # You are an SEO expert. Based on the following information, generate a meta title and meta description for a webpage:
-
-        # Page Name: {page_name}
-        # Main Keywords: {main_keywords}
-        # URL: {url}
-
-        # Requirements:
-        # 1. Meta Title: Must be between 30-60 characters (make sure the title is more than 30 characters and less than 60 characters including space ,strictly enforce this limit )
-        # 2. Meta Description: Must be between 120-140 characters (strictly enforce this limit, DO NOT EXCEED 140 characters )
-        # 3. ** prioritize the Description Must be of Maximum 140 characters **
-        # 4. Include relevant keywords naturally
-        # 5. Make it compelling and click-worthy
-        # 6. Ensure it's relevant to the page content
-        # 7. Make it crisp and very short Strictly and catchy.
-        # 8. Do not leave space when starting a new line , keep the sentence very short , at maximum use only 2 sentence.
-
-        # Please provide the output in this exact format:
-        # META TITLE: [your meta title here]
-        # META DESCRIPTION: [your meta description here]
-        # """
-        prompt=f"""
+        prompt = f"""
         You are an SEO expert. Based on the following information, generate a meta title and meta description for a webpage:
 
         Page Name: {page_name}
@@ -83,16 +62,37 @@ def generate_meta_content(page_name, main_keywords, url):
         URL: {url}
 
         Requirements:
-        1. Meta Title: Must be between 30-60 characters (strictly enforce this limit)
-        2. Meta Description: Must be between 120-145 characters (STRICT limit; do NOT exceed 150 under any condition)
-        3. Include relevant keywords naturally
-        4. Make it compelling and click-worthy
-        5. Ensure it's relevant to the page content
+        1. Meta Title: Must be between 30-60 characters (make sure the title is more than 30 characters and less than 60 characters including space ,strictly enforce this limit )
+        2. Meta Description: Must be between 120-135 characters (strictly enforce this limit, DO NOT EXCEED 140 characters )
+        3. ** prioritize the Description Must be of Maximum 135 characters **
+        4. Include relevant keywords naturally
+        5. Make it compelling and click-worthy
+        6. Ensure it's relevant to the page content
+        7. Make it crisp and very short Strictly and catchy.
+        8. Do not leave space when starting a new line , keep the sentence very short , at maximum use only 2 sentence.
 
         Please provide the output in this exact format:
         META TITLE: [your meta title here]
         META DESCRIPTION: [your meta description here]
         """
+        # prompt=f"""
+        # You are an SEO expert. Based on the following information, generate a meta title and meta description for a webpage:
+
+        # Page Name: {page_name}
+        # Main Keywords: {main_keywords}
+        # URL: {url}
+
+        # Requirements:
+        # 1. Meta Title: Must be between 30-60 characters (strictly enforce this limit)
+        # 2. Meta Description: Must be between 120-145 characters (STRICT limit; do NOT exceed 150 under any condition)
+        # 3. Include relevant keywords naturally
+        # 4. Make it compelling and click-worthy
+        # 5. Ensure it's relevant to the page content
+
+        # Please provide the output in this exact format:
+        # META TITLE: [your meta title here]
+        # META DESCRIPTION: [your meta description here]
+        # """
 
 
         response = model.generate_content(prompt)
