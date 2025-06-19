@@ -52,7 +52,7 @@ DF.index += 1
 
 def generate_meta_content(page_name, main_keywords, url):
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         prompt = f"""
         You are an SEO expert. Based on the following information, generate a meta title and meta description for a webpage:
