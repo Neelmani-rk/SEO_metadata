@@ -1,8 +1,54 @@
 import streamlit as st
+import pandas as pd
 import google.generativeai as genai
 
 # Configure API key from secrets.toml
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
+
+# ---- Dataset (36 rows) ----
+data = [
+    ["Engagement Rings", "engagement rings, engagement rings for women, diamond engagement rings, gold engagement rings, jewellery website", "https://www.blissdiamond.com/collections/engagement"],
+    ["Wedding Rings", "wedding rings, guys wedding rings, wedding bands for him, wedding rings for women, female wedding rings, gold wedding rings, unique wedding rings", "https://www.blissdiamond.com/collections/wedding-rings"],
+    ["Jewelry", "diamond rings, lab grown diamond, diamond earrings, diamond engagement rings, gold jewlary, diamond jewellery, jewellery website", "https://www.blissdiamond.com/collections/jewelry"],
+    ["Solitaire (Engagement Rings)", "solitaire diamond ring, solitaire ring, solitaire engagement ring, oval solitaire engagement ring, solitaire diamond, emerald cut solitaire ring", "https://www.blissdiamond.com/collections/engagement-rings-solitaire"],
+    ["Three Stone (Engagement Rings)", "three stone engagement ring, three stone wedding ring, three stone ring, three stone oval engagement ring, three stone diamond ring", "https://www.blissdiamond.com/collections/engagement-rings-three-stone"],
+    ["Bridal Sets (Engagement Rings)", "bridal set rings, womens bridal sets, engagement rings and bridal sets, moissanite bridal sets, moissanite bridal set rings", "https://www.blissdiamond.com/collections/engagement-rings-bridal-sets"],
+    ["Side Stones (Engagement Rings)", "oval engagement ring with side stones, side stone engagement rings", "https://www.blissdiamond.com/collections/engagement-rings-side-stones"],
+    ["Vintage (Engagement Rings)", "vintage engagement rings, vintage wedding rings, vintage style engagement rings, vintage diamond rings, vintage diamond engagement rings", "https://www.blissdiamond.com/collections/engagement-rings-vintage"],
+    ["Men's Rings (Wedding Rings)", "mens wedding bands, men marriage rings, bands for mens wedding, marriage bands for men, guys wedding rings", "https://www.blissdiamond.com/collections/wedding-anniversary-mens-rings"],
+    ["Women's Rings (Wedding Rings)", "engagement rings for women, female engagement rings, wedding bands for women, diamond rings for women, women marriage rings", "https://www.blissdiamond.com/collections/wedding-anniversary-womens-rings"],
+    ["Eternity Rings (Wedding Rings)", "eternity rings, eternity wedding rings, wedding rings online", "https://www.blissdiamond.com/collections/wedding-anniversary-eternity-rings"],
+    ["Diamond Rings (Wedding Rings)", "diamond rings, lab grown diamond rings, lab created diamond rings, diamond rings for women, lab diamond rings", "https://www.blissdiamond.com/collections/wedding-anniversary-diamond-rings"],
+    ["Gemstone (Wedding Rings)", "gemstone engagement rings, gemstone wedding rings, best gemstones for engagement rings, unique gemstone engagement rings, emerald gemstone engagement rings", "https://www.blissdiamond.com/collections/wedding-anniversary-rings-gemstone"],
+    ["Plain Bands (Wedding Rings)", "wedding band ring, mens wedding bands, masculine wedding bands, wedding bands for women, mens gold wedding bands, female wedding bands, ladies wedding bands", "https://www.blissdiamond.com/collections/wedding-anniversary-plain-bands"],
+    ["Pendants", "cross pendant necklace, diamond s necklace, pendants, gold cross necklace, pendant necklace", "https://www.blissdiamond.com/collections/pendants"],
+    ["Solitaire (Pendants)", "diamond solitaire necklace, solitaire diamond necklace 1 ct, diamond solitaire pendant, solitaire pendant diamond", "https://www.blissdiamond.com/collections/solitaire-pendants"],
+    ["Halo (Pendants)", "halo diamond necklace, diamond halo pendant, halo pendant", "https://www.blissdiamond.com/collections/halo-pendants"],
+    ["Three Stone (Pendants)", "three stone diamond necklace, 3 stone diamond necklace", "https://www.blissdiamond.com/collections/three-stone-pendants"],
+    ["Heart Shape (Pendants)", "heart diamond necklaces, diamond pendant heart, heart diamond pendent, necklace heart shape, heart cut diamond necklace", "https://www.blissdiamond.com/collections/heart-shape-pendants"],
+    ["Circle (Pendants)", "diamond circle necklace, necklace with diamond circle, necklace circle diamonds, circle necklace", "https://www.blissdiamond.com/collections/circle-pendants"],
+    ["Earrings", "diamond earrings, lab grown diamonds earrings, diamond earrings for men, diamond earrings for women, 1 carat diamond earrings, 2 carat diamond earrings", "https://www.blissdiamond.com/collections/earrings"],
+    ["Stud (Earrings)", "diamond stud earrings 2 carat, diamond stud earrings, diamond stud earrings for women, diamond stud earrings for men", "https://www.blissdiamond.com/collections/earrings-studs"],
+    ["Halo (Earrings)", "halo diamond earrings, halo diamond, halo earrings, halo stud earrings", "https://www.blissdiamond.com/collections/halo-earrings"],
+    ["Hoops (Earrings)", "diamond hoop earrings, diamond hoop earrings for women, gold diamond hoop earrings, gold and diamond hoop earrings, small diamond hoop earrings", "https://www.blissdiamond.com/collections/earrings-hoops"],
+    ["Gemstone (Earrings)", "gemstone shop online, gemstone earrings, best gemstone earrings", "https://www.blissdiamond.com/collections/gemstone-earrings"],
+    ["Lab Grown Diamonds", "lab grown diamond rings, lab grown diamond, lab grown diamond engagement rings, lab made diamond rings, lab grown diamonds earrings, best lab grown diamonds", "https://www.blissdiamond.com/collections/lab-grown-diamonds"],
+    ["Engagement Rings (Lab Grown)", "lab grown diamond engagement rings, lab created diamond engagement rings, lab diamond engagement rings, lab grown diamond rings", "https://www.blissdiamond.com/collections/lab-grown-engagement-rings"],
+    ["Wedding Rings (Lab Grown)", "lab grown diamond, wedding rings for women, best lab grown diamonds, 3 carat lab grown diamond ring, lab grown diamond rings for sale", "https://www.blissdiamond.com/collections/lab-grown-wedding-rings"],
+    ["Earrings (Lab Grown)", "lab grown diamond stud earrings, diamond earrings, lab grown diamonds earrings, lab created diamond earrings", "https://www.blissdiamond.com/collections/lab-grown-earrings"],
+    ["Bracelets (Lab Grown)", "lab grown diamond tennis bracelet", "https://www.blissdiamond.com/collections/lab-grown-bracelets"],
+    ["Fashion", "fashion jewelry, fashion jewelry shop, fashion jewelry store", "https://www.blissdiamond.com/collections/fashion"],
+    ["Bracelets (Fashion)", "tennis bracelets, gold bracelets, diamond tennis bracelet, gold bracelets for women, ladies gold bracelets, female gold bracelet, gold bangle bracelet", "https://www.blissdiamond.com/collections/fashion-bracelets"],
+    ["Blue Diamond (Fashion)", "blue diamond, blue diamond ring, diamond ring with blue diamond, diamond blue ring", "https://www.blissdiamond.com/collections/blue-diamond-fashion-jewelry"],
+    ["Black Diamond (Fashion)", "black diamond, black diamond ring, diamond ring with black diamonds, diamond black engagement rings", "https://www.blissdiamond.com/collections/black-diamond-fashion-jewelry"],
+    ["Rings (Fashion)", "rings, diamond rings, promise rings, a diamond ring, gold rings, mens rings, birthstone rings", "https://www.blissdiamond.com/collections/fashion-jewelry-rings"],
+    ["Necklaces (Fashion)", "gold necklaces, diamond necklaces, gold necklace women, men's necklace", "https://www.blissdiamond.com/collections/fashion-jewelry-necklaces"]
+]
+
+df = pd.DataFrame(data, columns=["Page Name", "Main Keywords", "URL"])
+df.index += 1
+
 
 # Function to generate meta content
 def generate_meta_content(page_name, main_keywords, url):
@@ -59,6 +105,15 @@ def main():
 
     st.title("🔍 SEO Meta Title & Description Generator VERSION 1")
     st.write("Generate optimized meta titles and descriptions using Gemini AI")
+    with st.sidebar:
+        st.header("Configuration")
+        st.success("✅ API Key loaded from secrets.toml")
+
+        selected_row = st.selectbox("Select Data Row (1–36)", options=df.index, format_func=lambda x: f"Row {x}")
+        selected_data = df.loc[selected_row]
+        default_page_name = selected_data["Page Name"]
+        default_keywords = selected_data["Main Keywords"]
+        default_url = selected_data["URL"]
 
     # Sidebar (show key present status)
     with st.sidebar:
