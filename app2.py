@@ -66,6 +66,7 @@ def generate_meta_content(page_name, main_keywords, url):
             3. Integrate the primary keywords naturally
             4. Ensure relevance to the page name and URL
             5. Make it action-oriented and enticing to click
+            6. Do not include the links , keep the sentences very short and up to the point .
     
             
             Write output in this exact format:
