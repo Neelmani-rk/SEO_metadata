@@ -242,7 +242,7 @@ def main():
                         st.write("**Meta Description:**")
                         if meta_description:
                             count = len(meta_description)
-                            if 120 <= count <= 150:
+                            if 120 <= count <= 160:
                                 st.success(f" {meta_description}")
                                 st.caption(f"Character count: {count}/150 (Perfect!)")
                             else:
