@@ -244,10 +244,10 @@ def main():
                             count = len(meta_description)
                             if 120 <= count <= 160:
                                 st.success(f" {meta_description}")
-                                st.caption(f"Character count: {count}/150 (Perfect!)")
+                                st.caption(f"Character count: {count}/160 (Perfect!)")
                             else:
                                 st.warning(f"⚠️ {meta_description}")
-                                st.caption(f"Character count: {count}/150 (Outside optimal range)")
+                                st.caption(f"Character count: {count}/160 (Outside optimal range)")
                         else:
                             st.error("❌ Failed to generate meta description")
 
