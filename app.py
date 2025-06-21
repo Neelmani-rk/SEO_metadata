@@ -6,7 +6,7 @@ import google.generativeai as genai
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 # Dataset with 36 rows
-DATA = [
+COLLECTION_DATA = [
     ["Engagement Rings", "engagement rings, engagement rings for women, diamond engagement rings, gold engagement rings, jewellery website", "https://www.blissdiamond.com/collections/engagement"],
     ["Wedding Rings", "wedding rings, guys wedding rings, wedding bands for him, wedding rings for women, female wedding rings, gold wedding rings, unique wedding rings", "https://www.blissdiamond.com/collections/wedding-rings"],
     ["Jewelry", "diamond rings, lab grown diamond, diamond earrings, diamond engagement rings, gold jewlary, diamond jewellery, jewellery website", "https://www.blissdiamond.com/collections/jewelry"],
@@ -45,10 +45,67 @@ DATA = [
     ["Necklaces (Fashion)", "gold necklaces, diamond necklaces, gold necklace women, men's necklace", "https://www.blissdiamond.com/collections/fashion-jewelry-necklaces"]
 ]
 
+# Dataset for main pages
+MAIN_PAGES_DATA = [
+    ["Home Page", "online jewelry store, best online jewelry store, best places to buy engagement rings online, gold jewellery online, diamonds", "https://www.blissdiamond.com/"],
+    ["About Us", "gold jewellery online, best online wedding rings, buy jewellery online, wedding rings online, diamonds", "https://www.blissdiamond.com/pages/about-us/"],
+    ["Contact Us", "engagement rings, diamonds, wedding rings, gold jewelry, Earrings, Bracelets", "https://www.blissdiamond.com/pages/contact-us"],
+    ["Custom Design", "custom engagement rings online, custom jewelry online, customised jewellery online", "https://www.blissdiamond.com/pages/custom-design"]
+]
 
-# Convert dataset to DataFrame
-DF = pd.DataFrame(DATA, columns=["Page Name", "Main Keywords", "URL"])
-DF.index += 1
+# Convert datasets to DataFrames
+COLLECTION_DF = pd.DataFrame(COLLECTION_DATA, columns=["Page Name", "Main Keywords", "URL"])
+COLLECTION_DF.index += 1
+MAIN_PAGES_DF = pd.DataFrame(MAIN_PAGES_DATA, columns=["Page Name", "Main Keywords", "URL"])
+MAIN_PAGES_DF.index += 1
+
+
+def validate_meta_content(content):
+    """
+    Validate the generated meta content against requirements
+    Returns dict with 'valid' boolean and 'errors' list
+    """
+    errors = []
+    
+    try:
+        # Extract meta title and description using regex
+        title_match = re.search(r'META TITLE:\s*(.+)', content, re.IGNORECASE)
+        desc_match = re.search(r'META DESCRIPTION:\s*(.+)', content, re.IGNORECASE)
+        
+        if not title_match:
+            errors.append("Meta title not found in expected format")
+        else:
+            title = title_match.group(1).strip()
+            title_length = len(title)
+            
+            if title_length < 30:
+                errors.append(f"Meta title too short: {title_length} characters (minimum 30)")
+            elif title_length > 60:
+                errors.append(f"Meta title too long: {title_length} characters (maximum 60)")
+        
+        if not desc_match:
+            errors.append("Meta description not found in expected format")
+        else:
+            description = desc_match.group(1).strip()
+            desc_length = len(description)
+            
+            if desc_length < 120:
+                errors.append(f"Meta description too short: {desc_length} characters (minimum 120)")
+            elif desc_length > 160:
+                errors.append(f"Meta description too long: {desc_length} characters (maximum 160)")
+            
+            # Check if it ends with "Shop Now!"
+            if not description.endswith("Shop Now!"):
+                errors.append("Meta description must end with 'Shop Now!'")
+    
+    except Exception as e:
+        errors.append(f"Validation error: {str(e)}")
+    
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors
+    }
+
 
 def generate_meta_content(page_name, main_keywords, url):
     try:
@@ -76,24 +133,7 @@ def generate_meta_content(page_name, main_keywords, url):
         META TITLE: [your meta title here]
         META DESCRIPTION: [your meta description here]
         """
-        # prompt=f"""
-        # You are an SEO expert. Based on the following information, generate a meta title and meta description for a webpage:
-
-        # Page Name: {page_name}
-        # Main Keywords: {main_keywords}
-        # URL: {url}
-
-        # Requirements:
-        # 1. Meta Title: Must be between 30-60 characters (strictly enforce this limit)
-        # 2. Meta Description: Must be between 120-145 characters (STRICT limit; do NOT exceed 150 under any condition)
-        # 3. Include relevant keywords naturally
-        # 4. Make it compelling and click-worthy
-        # 5. Ensure it's relevant to the page content
-
-        # Please provide the output in this exact format:
-        # META TITLE: [your meta title here]
-        # META DESCRIPTION: [your meta description here]
-        # """
+       
 
 
         response = model.generate_content(prompt)
@@ -102,7 +142,6 @@ def generate_meta_content(page_name, main_keywords, url):
     except Exception as e:
         return f"Error: {str(e)}"
     
-
 def parse_response(response_text):
     lines = response_text.strip().split('\n')
     meta_title = ""
@@ -113,6 +152,7 @@ def parse_response(response_text):
         elif line.startswith("META DESCRIPTION:"):
             meta_description = line.replace("META DESCRIPTION:", "").strip()
     return meta_title, meta_description
+
 def main():
     st.set_page_config(
         page_title="SEO Meta Generator",
@@ -130,11 +170,20 @@ def main():
         else:
             st.error("❌ Missing GEMINI_API_KEY in secrets")
 
-        selected_row = st.selectbox("Select Data Row (1–36)", options=DF.index, format_func=lambda x: f"Row {x}")
-        selected_data = DF.loc[selected_row]
-        default_page_name = selected_data["Page Name"]
-        default_keywords = selected_data["Main Keywords"]
-        default_url = selected_data["URL"]
+        data_type = st.radio("Select Data Type", ["Collections", "Main Pages"])
+
+        if data_type == "Collections":
+            selected_row = st.selectbox("Select Collection Row (1–36)", options=COLLECTION_DF.index, format_func=lambda x: f"Row {x} - {COLLECTION_DF.loc[x, 'Page Name']}")
+            selected_data = COLLECTION_DF.loc[selected_row]
+            default_page_name = selected_data["Page Name"]
+            default_keywords = selected_data["Main Keywords"]
+            default_url = selected_data["URL"]
+        else:
+            selected_row = st.selectbox("Select Main Page", options=MAIN_PAGES_DF.index, format_func=lambda x: f"{MAIN_PAGES_DF.loc[x, 'Page Name']}")
+            selected_data = MAIN_PAGES_DF.loc[selected_row]
+            default_page_name = selected_data["Page Name"]
+            default_keywords = selected_data["Main Keywords"]
+            default_url = selected_data["URL"]
 
     st.header("Input Information")
 
@@ -193,12 +242,12 @@ def main():
                         st.write("**Meta Description:**")
                         if meta_description:
                             count = len(meta_description)
-                            if 120 <= count <= 160:
+                            if 120 <= count <= 150:
                                 st.success(f" {meta_description}")
-                                st.caption(f"Character count: {count}/160 (Perfect!)")
+                                st.caption(f"Character count: {count}/150 (Perfect!)")
                             else:
                                 st.warning(f"⚠️ {meta_description}")
-                                st.caption(f"Character count: {count}/160 (Outside optimal range)")
+                                st.caption(f"Character count: {count}/150 (Outside optimal range)")
                         else:
                             st.error("❌ Failed to generate meta description")
 
@@ -213,10 +262,11 @@ def main():
     with st.expander("📖 How to use this tool"):
         st.write("""
         1. **Add API Key**: Place your Gemini API key in `.streamlit/secrets.toml`
-        2. **Select a row**: Auto-fill inputs from dropdown (Row 1–36)
-        3. **Review & edit**: Optionally modify Page Name, Keywords, or URL
-        4. **Click Generate**: Get SEO-optimized meta tags
-        5. **Copy Output**: Paste generated tags into your HTML head
+        2. **Select Data Type**: Choose between 'Collections' or 'Main Pages'
+        3. **Select a row**: Auto-fill inputs from dropdown
+        4. **Review & edit**: Optionally modify Page Name, Keywords, or URL
+        5. **Click Generate**: Get SEO-optimized meta tags
+        6. **Copy Output**: Paste generated tags into your HTML head
         """)
 
 if __name__ == "__main__":
