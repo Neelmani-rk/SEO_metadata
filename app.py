@@ -379,7 +379,7 @@ def run_bulk_processing(product_names):
                     status.markdown(f"✅ Processed Row {i + idx + 1}: `{result['Product Name']}`")
 
             progress.progress(min((i + batch_size) / total, 1.0))
-            time.sleep(1)
+            time.sleep(2)
 
     return results
 
