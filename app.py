@@ -276,9 +276,11 @@ import pandas as pd
 import time
 import google.generativeai as genai
 import concurrent.futures
-import re
 from io import StringIO
 
+
+st.set_page_config(page_title="Bulk Meta Generator", layout="wide")
+st.title("📦 Bulk SEO Meta Title & Description Generator with Keywords")
 # Load API keys from secrets.toml
 API_KEYS = [
     st.secrets["GEMINI_API_KEY_1"],
@@ -287,20 +289,38 @@ API_KEYS = [
     st.secrets["GEMINI_API_KEY_4"]
 ]
 
-# Prompt template
+# Load keyword dataset
+@st.cache_data
+def load_keyword_data():
+    return pd.read_csv("keyword_data.csv")  # Place your 4000-row keyword CSV in app folder
+
+keyword_df = load_keyword_data()
+
+# Preprocess and rank keywords
+def get_best_keywords(df, top_n=10):
+    df = df.copy()
+    df["score"] = (
+        df["Avg. monthly searches"] * 0.4 +
+        df["Competition (indexed value)"] * 1.0 +
+        df["Top of page bid (high range)"] * 10
+    )
+    top_keywords = df.sort_values(by="score", ascending=False)["Keyword"].head(top_n).tolist()
+    return top_keywords
+
+BEST_KEYWORDS = get_best_keywords(keyword_df, top_n=10)
+
 PROMPT_TEMPLATE = """
 You are an expert SEO specialist.
 
 Your task is to craft a compelling Meta Title and Meta Description for a webpage. These will appear on Google search results and are crucial to maximize Click-Through Rate (CTR) and improve visibility on Search Engine Results Pages (SERPs).
 
 Please strictly follow these requirements:
-
 1. Meta Title: 30–60 characters only
-2. ** Meta Description: 120–140 characters only or 2 very brief sentences. Do not exceed 150 character limit. **
-3. Integrate the primary keywords naturally
-4. Ensure relevance to the page name and URL
+2. Meta Description: 120–140 characters only or 2 very brief sentences. Do not exceed 150 character limit.
+3. Integrate the provided high-value keywords naturally
+4. Ensure relevance to the product name
 5. Make it action-oriented and enticing to click
-6. Do not include the links , keep the sentences very short and up to the point .
+6. Do not include the links , keep the sentences very short and up to the point.
 
 Write output in this exact format:
 META TITLE: [your title here]
@@ -308,13 +328,17 @@ META DESCRIPTION: [your description here]
 
 Input:
 - Product Name: {product_name}
+- High-value Keywords: {keywords}
 """
 
 def generate_with_model(api_key, product_name):
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-2.5-flash")
-        prompt = PROMPT_TEMPLATE.format(product_name=product_name)
+        prompt = PROMPT_TEMPLATE.format(
+            product_name=product_name,
+            keywords=", ".join(BEST_KEYWORDS)
+        )
         response = model.generate_content(prompt)
         return parse_response(product_name, response.text)
     except Exception as e:
@@ -335,33 +359,31 @@ def run_bulk_processing(product_names):
     results = []
     batch_size = 4
     total = len(product_names)
-    status_placeholder = st.empty()
+
+    progress = st.empty()
+    status = st.empty()
 
     with st.spinner("🚀 Bulk processing started..."):
         for i in range(0, total, batch_size):
-            batch = product_names[i:i + batch_size]
+            batch = product_names[i:i+batch_size]
             futures = []
-            status_lines = []
-
+            
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for j, product in enumerate(batch):
                     key = API_KEYS[j % len(API_KEYS)]
                     futures.append(executor.submit(generate_with_model, key, product))
 
-                for k, future in enumerate(futures):
+                for idx, future in enumerate(futures):
                     result = future.result()
                     results.append(result)
-                    row_index = i + k + 1
-                    status_lines.append(f"✅ Row {row_index}: Processing done")
+                    status.markdown(f"✅ Processed Row {i + idx + 1}: `{result['Product Name']}`")
 
-            status_placeholder.markdown("**Progress:**\n" + "\n".join(status_lines))
+            progress.progress(min((i + batch_size) / total, 1.0))
             time.sleep(1)
 
     return results
 
 def main():
-    st.set_page_config(page_title="Bulk Meta Generator", layout="wide")
-    st.title("📦 Bulk SEO Meta Title & Description Generator")
 
     uploaded_file = st.file_uploader("Upload CSV file with 'Product Name' column", type=["csv"])
     if uploaded_file:
@@ -387,7 +409,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# if __name__ == "__main__":
-#     main()
